@@ -203,7 +203,9 @@ class MotorTownAnalyzer:
             mask = cv2.inRange(hsv, (0, 0, 150), (180, 255, 255))
             inv = cv2.bitwise_not(mask)
             
-            z = cv2.resize(inv, (0,0), fx=2.5, fy=2.5, interpolation=cv2.INTER_CUBIC)
+            # Massive OCR stability improvement: Pad the edges so characters aren't touching borders
+            padded = cv2.copyMakeBorder(inv, 20, 20, 20, 20, cv2.BORDER_CONSTANT, value=[255, 255, 255])
+            z = cv2.resize(padded, (0,0), fx=2.5, fy=2.5, interpolation=cv2.INTER_CUBIC)
 
             if debug_filename:
                 cv2.imwrite(debug_filename, z)

@@ -75,6 +75,7 @@ echo ===================================================
 echo.
 echo The web interface will open automatically in your browser...
 echo To close the program, simply close this black window!
+echo (To capture a new KM window area later, just delete "config.json")
 echo.
 
 :: Open the browser in the background
