@@ -19,13 +19,25 @@ FOR /F "tokens=*" %%g IN ('powershell -Command "$ErrorActionPreference='Silently
 
 if not "%LATEST_TAG%"=="" (
     if not "%LATEST_TAG%"=="%CURRENT_VERSION%" (
-        echo [UPDATE AVAILABLE] A new version %%LATEST_TAG%% is available! You are running %CURRENT_VERSION%.
-        echo Your browser will now open the download page. Please download the newest zip!
-        timeout /t 5 >nul
-        start "" "https://github.com/20Bosko07/MotorTown-Watcher/releases/latest"
-        echo Please extract the new files over your current folder and run start.bat again.
-        echo Exiting...
-        pause
+        echo [UPDATE] A new version %LATEST_TAG% is available! You are running %CURRENT_VERSION%.
+        echo [UPDATE] Downloading the latest update... Please wait.
+        
+        powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://github.com/20Bosko07/MotorTown-Watcher/archive/refs/tags/%LATEST_TAG%.zip' -OutFile 'update.zip'"
+        
+        echo [UPDATE] Extracting files...
+        powershell -Command "Expand-Archive -Path 'update.zip' -DestinationPath 'update_tmp' -Force"
+        
+        echo @echo off > install_update.bat
+        echo echo [UPDATE] Installing new files... >> install_update.bat
+        echo timeout /t 2 /nobreak ^>nul >> install_update.bat
+        echo FOR /D %%%%G IN ("update_tmp\MotorTown-Watcher-*") DO xcopy /Y /S /E /Q "%%%%G\*" .\ >> install_update.bat
+        echo rmdir /S /Q update_tmp >> install_update.bat
+        echo del update.zip >> install_update.bat
+        echo echo [UPDATE] Installation complete! Restarting... >> install_update.bat
+        echo start start.bat >> install_update.bat
+        echo del install_update.bat >> install_update.bat
+        
+        start install_update.bat
         exit /b
     ) else (
         echo [INFO] You are running the latest version ^(%CURRENT_VERSION%^).
