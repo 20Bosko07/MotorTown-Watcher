@@ -9,14 +9,29 @@ echo.
 
 :: --- Update Check from GitHub Releases ---
 echo Checking for updates from GitHub...
-FOR /F "tokens=*" %%g IN ('powershell -Command "$ErrorActionPreference='SilentlyContinue'; $release = Invoke-RestMethod -Uri 'https://api.github.com/repos/20Bosko07/MotorTown-Watcher/releases/latest'; if($release) { $release.tag_name }"') do (SET LATEST_TAG=%%g)
+if exist "version.txt" (
+    set /p CURRENT_VERSION=<version.txt
+) else (
+    set CURRENT_VERSION=v1.0.0
+)
+
+FOR /F "tokens=*" %%g IN ('powershell -Command "$ErrorActionPreference='SilentlyContinue'; [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $release = Invoke-RestMethod -Uri 'https://api.github.com/repos/20Bosko07/MotorTown-Watcher/releases/latest'; if($release) { $release.tag_name }"') do (SET LATEST_TAG=%%g)
 
 if not "%LATEST_TAG%"=="" (
-    echo [INFO] Latest release on GitHub is: %LATEST_TAG%
-    echo Please make sure your version is up to date, or check here:
-    echo https://github.com/20Bosko07/MotorTown-Watcher/releases/latest
+    if not "%LATEST_TAG%"=="%CURRENT_VERSION%" (
+        echo [UPDATE AVAILABLE] A new version %%LATEST_TAG%% is available! You are running %CURRENT_VERSION%.
+        echo Your browser will now open the download page. Please download the newest zip!
+        timeout /t 5 >nul
+        start "" "https://github.com/20Bosko07/MotorTown-Watcher/releases/latest"
+        echo Please extract the new files over your current folder and run start.bat again.
+        echo Exiting...
+        pause
+        exit /b
+    ) else (
+        echo [INFO] You are running the latest version ^(%CURRENT_VERSION%^).
+    )
 ) else (
-    echo [INFO] Could not check for updates. Skipping...
+    echo [INFO] Could not check for updates right now. Skipping...
 )
 echo ===================================================
 echo.
