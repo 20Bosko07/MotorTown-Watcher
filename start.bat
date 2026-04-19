@@ -15,7 +15,7 @@ if exist "version.txt" (
     set CURRENT_VERSION=v1.0.0
 )
 
-FOR /F "tokens=*" %%g IN ('powershell -Command "$ErrorActionPreference='SilentlyContinue'; [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $release = Invoke-RestMethod -Uri 'https://api.github.com/repos/20Bosko07/MotorTown-Watcher/releases/latest'; if($release) { $release.tag_name }"') do (SET LATEST_TAG=%%g)
+FOR /F "tokens=*" %%g IN ('powershell -Command "$ErrorActionPreference='SilentlyContinue'; [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $release = Invoke-RestMethod -Uri 'https://api.github.com/repos/20Bosko07/MotorTown-Watcher/releases/latest'; $release.tag_name"') do (SET LATEST_TAG=%%g)
 
 if not "%LATEST_TAG%"=="" (
     if not "%LATEST_TAG%"=="%CURRENT_VERSION%" (
@@ -30,7 +30,7 @@ if not "%LATEST_TAG%"=="" (
         echo @echo off > install_update.bat
         echo echo [UPDATE] Installing new files... >> install_update.bat
         echo timeout /t 2 /nobreak ^>nul >> install_update.bat
-        echo FOR /D %%%%G IN ("update_tmp\MotorTown-Watcher-*") DO xcopy /Y /S /E /Q "%%%%G\*" .\ >> install_update.bat
+        echo FOR /D %%%%G IN ^("update_tmp\MotorTown-Watcher-*"^) DO xcopy /Y /S /E /Q "%%%%G\*" .\ >> install_update.bat
         echo rmdir /S /Q update_tmp >> install_update.bat
         echo del update.zip >> install_update.bat
         echo echo [UPDATE] Installation complete! Restarting... >> install_update.bat

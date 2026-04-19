@@ -155,16 +155,16 @@ class MotorTownAnalyzer:
                 if win.width > 200 and win.height > 200:
                     self.monitor_full = {"top": max(0, win.top), "left": max(0, win.left), "width": win.width, "height": win.height}
                     self.monitor_km = {
-                        "top": win.top + win.height - int(win.height * 0.055),
-                        "left": win.left + int(win.width * 0.005),
-                        "width": int(win.width * 0.18),
+                        "top": win.top + win.height - int(win.height * 0.084),
+                        "left": win.left + int(win.width * 0.003),
+                        "width": int(win.width * 0.15),
                         "height": int(win.height * 0.045)
                     }
                     self.monitor_ap = {
-                        "top": win.top + int(win.height * 0.35),
-                        "left": win.left + int(win.width * 0.70),
-                        "width": int(win.width * 0.30),
-                        "height": int(win.height * 0.30)
+                        "top": win.top + int(win.height * 0.37),
+                        "left": win.left + int(win.width * 0.80),
+                        "width": int(win.width * 0.18),
+                        "height": int(win.height * 0.12)
                     }
                     self.monitor_dash = {
                         "top": win.top + win.height - int(win.height * 0.35),

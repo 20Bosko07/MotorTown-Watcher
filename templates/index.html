@@ -45,7 +45,7 @@
     <!-- Notstopp -->
     <div class="flex justify-center mt-4 max-w-4xl mx-auto w-full">
         <button onclick="emergencyBrake()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-8 rounded-xl shadow-lg border border-red-500 text-xl tracking-wider transition-colors">
-            ðŸ›‘ EMERGENCY BRAKE ðŸ›‘
+            🚨 EMERGENCY BRAKE 🚨
         </button>
     </div>
 
@@ -66,7 +66,7 @@
         âš ï¸ STUCK ALERT! Vehicle is not moving! âš ï¸
     </div>
     <div id="arrive-alert" class="hidden bg-emerald-500 text-white rounded-xl p-4 font-bold text-center fixed top-20 left-4 right-4 z-50">
-        ðŸ Arriving soon! (<1km) ðŸ
+        🏁 Arriving soon! (<1km) 🏁
     </div>
 
     <script>
@@ -201,11 +201,11 @@
                     if (Notification.permission === "default" || Notification.permission === "prompt") {
                         Notification.requestPermission().then(perm => {
                             if (perm === "granted") {
-                                new Notification("Motor Town Watcher", { body: "Push Notifications Activated! ðŸ" });
+                                new Notification("Motor Town Watcher", { body: "Push Notifications Activated! 🏁" });
                             }
                         });
                     } else if (Notification.permission === "granted") {
-                        new Notification("Motor Town Watcher", { body: "Push Notifications are ON! ðŸ" });
+                        new Notification("Motor Town Watcher", { body: "Push Notifications are ON! 🏁" });
                     }
                 }
             } else {
