@@ -35,7 +35,20 @@ import pygetwindow as gw
 import base64
 from collections import deque
 
-pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+tess_paths = [
+    r'C:\Program Files\Tesseract-OCR\tesseract.exe',
+    r'C:\Program Files (x86)\Tesseract-OCR\tesseract.exe',
+    r'C:\Users\\' + os.getlogin() + r'\AppData\Local\Programs\Tesseract-OCR\tesseract.exe'
+]
+for p in tess_paths:
+    if os.path.exists(p):
+        pytesseract.pytesseract.tesseract_cmd = p
+        break
+
+if not os.path.exists(pytesseract.pytesseract.tesseract_cmd):
+    print("!!! ERROR: TESSERACT OCR NOT FOUND !!!")
+    print("Please install Tesseract OCR from: https://github.com/UB-Mannheim/tesseract/wiki")
+    print("The app will not recognize any text until it is installed.")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -142,10 +155,10 @@ class MotorTownAnalyzer:
                 if win.width > 200 and win.height > 200:
                     self.monitor_full = {"top": max(0, win.top), "left": max(0, win.left), "width": win.width, "height": win.height}
                     self.monitor_km = {
-                        "top": win.top + win.height - int(win.height * 0.05),
-                        "left": win.left + int(win.width * 0.01),
-                        "width": int(win.width * 0.15),
-                        "height": int(win.height * 0.04)
+                        "top": win.top + win.height - int(win.height * 0.055),
+                        "left": win.left + int(win.width * 0.005),
+                        "width": int(win.width * 0.18),
+                        "height": int(win.height * 0.045)
                     }
                     self.monitor_ap = {
                         "top": win.top + int(win.height * 0.35),
@@ -178,7 +191,8 @@ class MotorTownAnalyzer:
 
             text = pytesseract.image_to_string(z, config=ocr_config)
             return text.strip()
-        except:
+        except Exception as e:
+            print(f"[OCR Error] Could not read image: {e}")
             return ""
 
     def analyze_frame(self):
