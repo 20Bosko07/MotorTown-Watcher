@@ -1,0 +1,20 @@
+{
+  "name": "Motortown Watcher",
+  "short_name": "MT Watcher",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz1cImh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnXCIgd2lkdGg9XCIxOThcIiBoZWlnaHQ9XCIxOThcIj48cmVjdCB3aWR0aD1cIjExMAlcIiBoZWlnaHQ9XCIxMTBcIiBmaWxsPVwiI2YwMFwiLz48L3N2Zz4=",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz1cImh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnXCIgd2lkdGg9XCI1MTJcIiBoZWlnaHQ9XCI1MTJcIj48cmVjdCB3aWR0aD1cIjUxMlwiIGhlaWdodD1cIjUxMlwiIGZpbGw9XCIjZjAwXCIvPjwvc3ZnPg==",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

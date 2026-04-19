@@ -1,0 +1,288 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motor Town Watcher</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+    <link rel="manifest" href="/manifest.json">
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen py-8 px-4 flex flex-col gap-6">
+
+    <!-- Header -->
+    <header class="text-center relative max-w-4xl mx-auto w-full">
+        <button onclick="toggleNotification()" id="notify-btn" title="Toggle Notifications" class="absolute top-2 right-2 bg-slate-700 hover:bg-slate-600 text-slate-400 p-2 rounded-full shadow border border-slate-600 transition-colors">
+            <svg id="bell-off" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0M3.124 7.5A8.969 8.969 0 0 1 5.292 3m13.416 0a8.969 8.969 0 0 1 2.168 4.5" />
+            </svg>
+            <svg id="bell-on" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 hidden text-blue-400">
+              <path fill-rule="evenodd" d="M5.25 9a6.75 6.75 0 0 1 13.5 0v.75c0 2.123.8 4.057 2.118 5.52a.75.75 0 0 1-.297 1.206c-1.544.57-3.16.99-4.831 1.243a3.75 3.75 0 1 1-7.48 0 24.585 24.585 0 0 1-4.831-1.244.75.75 0 0 1-.298-1.205A8.217 8.217 0 0 0 5.25 9.75V9Zm4.502 8.9a2.25 2.25 0 1 0 4.496 0 25.057 25.057 0 0 1-4.496 0Z" clip-rule="evenodd" />
+            </svg>
+        </button>
+        <h1 class="text-4xl font-bold text-blue-400">
+            MT Watcher
+        </h1>
+        <div id="connection-status" class="inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold bg-red-600 text-white">
+            Disconnected
+        </div>
+    </header>
+
+    <!-- Main Status Box -->
+    <div id="main-card" class="bg-slate-800 rounded-2xl p-6 shadow-xl border border-slate-700 text-center mx-auto w-full max-w-4xl">
+        <h2 class="text-slate-400 text-sm uppercase tracking-wider font-semibold">Distance to Destination</h2>
+        <div class="text-6xl font-black my-4">
+            <span id="km-display">0.0 km</span>
+        </div>
+
+        <div class="flex items-center justify-center gap-2 mt-2">
+            <div id="ap-badge" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-slate-700 text-slate-400">
+                Autopilot OFF
+            </div>
+        </div>
+    </div>
+
+    <!-- Notstopp -->
+    <div class="flex justify-center mt-4 max-w-4xl mx-auto w-full">
+        <button onclick="emergencyBrake()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-8 rounded-xl shadow-lg border border-red-500 text-xl tracking-wider transition-colors">
+            ðŸ›‘ EMERGENCY BRAKE ðŸ›‘
+        </button>
+    </div>
+
+    <!-- Live Screenshot -->
+    <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 w-full mt-2 max-w-4xl mx-auto flex flex-col md:flex-row gap-4">
+        <div class="w-full">
+            <span class="text-slate-400 text-xs uppercase text-center block mb-2">Live Game Feed</span>
+            <img id="live-screen" src="" class="rounded-lg w-full opacity-0 transition-opacity bg-black" alt="Waiting..." />
+        </div>
+        <div class="w-full">
+            <span class="text-slate-400 text-xs uppercase text-center block mb-2">Dashboard (Fuel/Temp)</span>
+            <img id="dash-img" src="" class="rounded-lg w-full opacity-0 transition-opacity bg-black" alt="Waiting..." />
+        </div>
+    </div>
+
+    <!-- Alerts -->
+    <div id="stuck-alert" class="hidden bg-red-600 text-white rounded-xl p-4 font-bold text-center fixed top-4 left-4 right-4 z-50">
+        âš ï¸ STUCK ALERT! Vehicle is not moving! âš ï¸
+    </div>
+    <div id="arrive-alert" class="hidden bg-emerald-500 text-white rounded-xl p-4 font-bold text-center fixed top-20 left-4 right-4 z-50">
+        ðŸ Arriving soon! (<1km) ðŸ
+    </div>
+
+    <script>
+        const socket = io();
+
+        const statusEl = document.getElementById('connection-status');
+        const kmEl = document.getElementById('km-display');
+        const apEl = document.getElementById('ap-badge');
+        const screenEl = document.getElementById('live-screen');
+        const dashEl = document.getElementById('dash-img');
+        window.stuckSentCount = false;
+        window.arriveSentCount = false;
+        window.arrivedSentCount = false;
+
+        function emergencyBrake() {
+            if(confirm('Are you sure you want to trigger the emergency brake?')) {
+                socket.emit('brake_now');
+            }
+        }
+        
+        let notificationsEnabled = false;
+
+        // -- Web Audio API Synth --
+        let audioCtx;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playToneCore(type) {
+            try {
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                if (type === 'arrive') {
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+                    oscillator.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.15);
+                    oscillator.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.3);
+                    oscillator.frequency.setValueAtTime(1046.50, audioCtx.currentTime + 0.45);
+                    gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.2);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 1.2);
+                } else if (type === 'stuck') {
+                    oscillator.type = 'square';
+                    for(let i=0; i<3; i++) {
+                        oscillator.frequency.setValueAtTime(400, audioCtx.currentTime + i*0.4);
+                        oscillator.frequency.setValueAtTime(600, audioCtx.currentTime + i*0.4 + 0.2);
+                    }
+                    gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                    gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.2);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 1.2);
+                } else {
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(1040, audioCtx.currentTime);
+                    gainNode.gain.setValueAtTime(0.22, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.3);
+                }
+            } catch(e) {}
+        }
+
+        function playTone(type) {
+            if (!notificationsEnabled) return;
+            try {
+                initAudio();
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume().then(() => playToneCore(type)).catch(() => {});
+                } else {
+                    playToneCore(type);
+                }
+            } catch(e) {}
+        }
+
+        function showMiniToast(msg) {
+            const toast = document.createElement('div');
+            toast.innerText = msg;
+            toast.className = 'fixed top-20 right-4 bg-blue-600 text-white p-3 rounded-lg shadow-lg font-bold z-50 transition-opacity duration-500';
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 500);
+            }, 1800);
+        }
+
+        function triggerBrowserNotification(title, body, type = 'test') {
+            if (!notificationsEnabled) return;
+            playTone(type);
+            if ("Notification" in window && Notification.permission === "granted") {
+                try {
+                    new Notification(title, { body: body });
+                } catch(e) {}
+            }
+        }
+        
+        function setNotificationState(state) {
+            notificationsEnabled = state;
+            const btn = document.getElementById('notify-btn');
+            const bellOff = document.getElementById('bell-off');
+            const bellOn = document.getElementById('bell-on');
+            
+            if (notificationsEnabled) {
+                btn.classList.add('bg-blue-900', 'border-blue-500');
+                btn.classList.remove('bg-slate-700', 'border-slate-600');
+                bellOff.classList.add('hidden');
+                bellOn.classList.remove('hidden');
+            } else {
+                btn.classList.remove('bg-blue-900', 'border-blue-500');
+                btn.classList.add('bg-slate-700', 'border-slate-600');
+                bellOn.classList.add('hidden');
+                bellOff.classList.remove('hidden');
+            }
+        }
+
+        function toggleNotification() {
+            setNotificationState(!notificationsEnabled);
+            
+            if (notificationsEnabled) {
+                
+                showMiniToast('Notifications On');
+
+                if ("Notification" in window) {
+                    if (Notification.permission === "default" || Notification.permission === "prompt") {
+                        Notification.requestPermission().then(perm => {
+                            if (perm === "granted") {
+                                new Notification("Motor Town Watcher", { body: "Push Notifications Activated! ðŸ" });
+                            }
+                        });
+                    } else if (Notification.permission === "granted") {
+                        new Notification("Motor Town Watcher", { body: "Push Notifications are ON! ðŸ" });
+                    }
+                }
+            } else {
+                window.stuckSentCount = false;
+                window.arriveSentCount = false;
+                window.arrivedSentCount = false;
+                showMiniToast('Notifications Off');
+            }
+        }
+
+        socket.on('connect' , () => {
+            statusEl.textContent = 'Connected';
+            statusEl.className = "inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold bg-green-600 text-white";
+        });
+
+        socket.on('disconnect', () => {
+            statusEl.textContent = 'Disconnected';
+            statusEl.className = "inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold bg-red-600 text-white";
+        });
+
+        socket.on('update', (data) => {
+            if(data.km !== undefined) kmEl.innerText = data.km;
+
+            if (data.autopilot) {
+                apEl.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-blue-900 text-blue-300";
+                apEl.innerText = "Autopilot ON";
+            } else {
+                apEl.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-slate-700 text-slate-400";
+                apEl.innerText = "Autopilot OFF";
+            }
+
+            if(data.screenshot && data.screenshot.length > 50) {
+                screenEl.src = data.screenshot;
+                screenEl.classList.remove('opacity-0');
+            }
+            if(data.dash_img && data.dash_img.length > 50) {  
+                dashEl.src = data.dash_img;        
+                dashEl.classList.remove('opacity-0');
+            }
+
+            if (data.stuck_alert) {
+                document.getElementById('stuck-alert').classList.remove('hidden');
+                document.getElementById('main-card').classList.add('bg-red-950');
+                if (!window.stuckSentCount) {
+                    triggerBrowserNotification("Motor Town Watcher", "STUCK ALERT! Vehicle is not moving!", 'stuck');
+                    window.stuckSentCount = true;
+                }
+            } else {
+                window.stuckSentCount = false;
+                document.getElementById('stuck-alert').classList.add('hidden');
+                document.getElementById('main-card').classList.remove('bg-red-950');
+            }
+
+            if (data.arrived) {
+                document.getElementById('arrive-alert').classList.remove('hidden', 'bg-emerald-500');
+                document.getElementById('arrive-alert').classList.add('bg-blue-600');
+                document.getElementById('arrive-alert').innerText = 'DESTINATION REACHED!';
+                if (!window.arrivedSentCount) {
+                    triggerBrowserNotification("Motor Town Watcher", "Destination reached!", 'arrive');
+                    window.arrivedSentCount = true;
+                }
+                window.arriveSentCount = false;
+            } else if (data.arrive_alert) {
+                document.getElementById('arrive-alert').classList.remove('hidden', 'bg-blue-600');
+                document.getElementById('arrive-alert').classList.add('bg-emerald-500');
+                document.getElementById('arrive-alert').innerText = 'Arriving soon! (<1km)';
+                if (!window.arriveSentCount) {
+                    triggerBrowserNotification("Motor Town Watcher", "Arriving soon! (<1km)", 'test');
+                    window.arriveSentCount = true;
+                }
+                window.arrivedSentCount = false;
+            } else {
+                window.arriveSentCount = false;
+                window.arrivedSentCount = false;
+                document.getElementById('arrive-alert').classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

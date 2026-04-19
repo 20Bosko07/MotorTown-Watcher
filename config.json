@@ -1,0 +1,20 @@
+{
+    "monitor_km": {
+        "top": 993,
+        "left": 75,
+        "width": 85,
+        "height": 23
+    },
+    "monitor_ap": {
+        "top": 605,
+        "left": 1748,
+        "width": 108,
+        "height": 27
+    },
+    "monitor_dash": {
+        "top": 922,
+        "left": 1526,
+        "width": 46,
+        "height": 81
+    }
+}

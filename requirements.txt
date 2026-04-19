@@ -1,0 +1,10 @@
+﻿fastapi
+uvicorn
+python-socketio
+opencv-python
+numpy
+mss
+pytesseract
+keyboard
+jinja2
+win10toast

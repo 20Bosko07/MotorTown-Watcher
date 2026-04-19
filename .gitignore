@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.env
+venv/
+env/
+.vscode/
+
+# Debug output files
+debug_km.png
+debug_ap_yellow.png
+debug_dash.png
