@@ -411,27 +411,27 @@ def check_and_ask_roi(analyzer_instance):
         return 
 
     print("\n=======================================================")
-    print("[SETUP] Dein KM Bereich auf dem Bildschirm wird nicht erkannt?")
-    print("[SETUP] Willst du den Bereich EINMALIG und MANUELL mit der Maus markieren?")
-    print("        Druecke J (fuer Ja) oder N (fuer Nein / Standard verwenden).")
+    print("[SETUP] Is the KM tracking area not working for you?")
+    print("[SETUP] Do you want to manually select the area ONCE using your mouse?")
+    print("        Press Y (for Yes) or N (for No / use default).")
     print("=======================================================")
     
     try:
         import pygetwindow as gw
-        choice = input("Deine Wahl (J/N): ").strip().lower()
-        if choice != 'j':
+        choice = input("Your choice (Y/N): ").strip().lower()
+        if choice != 'y':
             return
             
-        print("\n[SETUP] Motor Town Fenster wird gesucht...")
+        print("\n[SETUP] Looking for Motor Town window...")
         windows = [w for w in gw.getWindowsWithTitle("Motor Town") if 'Watcher' not in w.title]
         if not windows:
-            print("[FEHLER] Motor Town ist nicht offen! Starte erst das Spiel. Verwende Standard.")
+            print("[ERROR] Motor Town is not running! Start the game first. Using default area.")
             time.sleep(3)
             return
             
         win = windows[0]
         if win.width < 200 or win.height < 200:
-            print("[FEHLER] Das Motor Town Fenster ist minimiert! Verwende Standard.")
+            print("[ERROR] The Motor Town window is minimized! Using default area.")
             time.sleep(3)
             return
 
@@ -440,13 +440,13 @@ def check_and_ask_roi(analyzer_instance):
             img_np = np.array(sct.grab(mon))
             bgr = cv2.cvtColor(img_np, cv2.COLOR_BGRA2BGR)
             
-            windowname = "KM Bereich ziehen (Danach ENTER druecken!)"
+            windowname = "Draw KM Area (Press ENTER when done!)"
             cv2.namedWindow(windowname, cv2.WINDOW_NORMAL)
             cv2.resizeWindow(windowname, int(win.width * 0.7), int(win.height * 0.7))
             cv2.setWindowProperty(windowname, cv2.WND_PROP_TOPMOST, 1)
             
-            print("[SETUP] Ein Screenshot hat sich geoeffnet!")
-            print("[SETUP] Bitte ziehe jetzt mit der Maus einen Rahmen GENAU um die KM Anzeige. Druecke anschliessend die ENTER Taste zu bestaetigen.")
+            print("[SETUP] A screenshot window has opened!")
+            print("[SETUP] Please use your mouse to draw a box EXACTLY around the KM display. Then press ENTER to confirm.")
             roi = cv2.selectROI(windowname, bgr, showCrosshair=True, fromCenter=False)
             cv2.destroyWindow(windowname)
             
@@ -460,11 +460,11 @@ def check_and_ask_roi(analyzer_instance):
                 analyzer_instance.custom_km_rect_pct = pct
                 with open("config.json", "w") as f:
                     json.dump({"km_rect_pct": pct}, f)
-                print(f"[ERFOLG] Neuer KM Bereich PERFEKT gespeichert! Er wird von nun an fuer dein Spiel verwendet.")
+                print(f"[SUCCESS] New KM area saved PERFECTLY! It will be used for your game from now on.")
             else:
-                print("[SETUP] Auswahl abgebrochen. Verwende Standard.")
+                print("[SETUP] Selection cancelled. Using default.")
     except Exception as e:
-        print(f"[FEHLER] Konnte Bereich nicht setzen: {e}")
+        print(f"[ERROR] Could not set area: {e}")
 
 if __name__ == "__main__":
     check_and_ask_roi(analyzer)
