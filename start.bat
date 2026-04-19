@@ -15,10 +15,10 @@ if exist "version.txt" (
     set CURRENT_VERSION=v1.0.0
 )
 
-FOR /F "tokens=*" %%g IN ('powershell -Command "$ErrorActionPreference='SilentlyContinue'; [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $release = Invoke-RestMethod -Uri 'https://api.github.com/repos/20Bosko07/MotorTown-Watcher/releases/latest'; $release.tag_name"') do (SET LATEST_TAG=%%g)
+FOR /F "tokens=*" %%g IN ('powershell -Command "$ErrorActionPreference='SilentlyContinue'; [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $tags = Invoke-RestMethod -Uri 'https://api.github.com/repos/20Bosko07/MotorTown-Watcher/tags'; if($tags) { $tags[0].name }"') do (SET LATEST_TAG=%%g)
 
 if not "%LATEST_TAG%"=="" (
-    if not "%LATEST_TAG%"=="%CURRENT_VERSION%" (
+    if "%CURRENT_VERSION%" LSS "%LATEST_TAG%" (
         echo [UPDATE] A new version %LATEST_TAG% is available! You are running %CURRENT_VERSION%.
         echo [UPDATE] Downloading the latest update... Please wait.
         

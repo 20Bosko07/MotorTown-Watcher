@@ -1,0 +1,2 @@
+FOR /F "tokens=*" %%g IN ('powershell -Command "$ErrorActionPreference='SilentlyContinue'; [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $release = Invoke-RestMethod -Uri 'https://api.github.com/repos/20Bosko07/MotorTown-Watcher/releases/latest'; $release.tag_name"') do (SET LATEST_TAG=%%g)
+        echo FOR /D %%%%G IN ("update_tmp\MotorTown-Watcher-*") DO xcopy /Y /S /E /Q "%%%%G\*" .\ >> install_update.bat
