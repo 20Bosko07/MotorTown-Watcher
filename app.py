@@ -86,6 +86,16 @@ class MotorTownAnalyzer:
         self.last_km_raw = ""
         self.latest_b64_image = ""
         self.latest_b64_dash = ""
+        self.custom_km_rect_pct = None
+
+        if os.path.exists("config.json"):
+            try:
+                with open("config.json", "r") as f:
+                    data = json.load(f)
+                    if "km_rect_pct" in data:
+                        self.custom_km_rect_pct = data["km_rect_pct"]
+            except Exception:
+                pass
 
     def _extract_km_values(self, km_text: str):
         km_clean = km_text.lower()
@@ -154,12 +164,21 @@ class MotorTownAnalyzer:
                 win = windows[0]
                 if win.width > 200 and win.height > 200:
                     self.monitor_full = {"top": max(0, win.top), "left": max(0, win.left), "width": win.width, "height": win.height}
-                    self.monitor_km = {
-                        "top": win.top + win.height - int(win.height * 0.084),
-                        "left": win.left + int(win.width * 0.003),
-                        "width": int(win.width * 0.15),
-                        "height": int(win.height * 0.045)
-                    }
+                    if getattr(self, 'custom_km_rect_pct', None):
+                        pt = self.custom_km_rect_pct
+                        self.monitor_km = {
+                            "top": win.top + int(win.height * pt['y']),
+                            "left": win.left + int(win.width * pt['x']),
+                            "width": int(win.width * pt['w']),
+                            "height": int(win.height * pt['h'])
+                        }
+                    else:
+                        self.monitor_km = {
+                            "top": win.top + win.height - int(win.height * 0.084),
+                            "left": win.left + int(win.width * 0.003),
+                            "width": int(win.width * 0.15),
+                            "height": int(win.height * 0.045)
+                        }
                     self.monitor_ap = {
                         "top": win.top + int(win.height * 0.37),
                         "left": win.left + int(win.width * 0.80),
@@ -387,5 +406,66 @@ async def background_task():
             print(f"Error in background task: {e}")
         await asyncio.sleep(1)
 
+def check_and_ask_roi(analyzer_instance):
+    if analyzer_instance.custom_km_rect_pct is not None:
+        return 
+
+    print("\n=======================================================")
+    print("[SETUP] Dein KM Bereich auf dem Bildschirm wird nicht erkannt?")
+    print("[SETUP] Willst du den Bereich EINMALIG und MANUELL mit der Maus markieren?")
+    print("        Druecke J (fuer Ja) oder N (fuer Nein / Standard verwenden).")
+    print("=======================================================")
+    
+    try:
+        import pygetwindow as gw
+        choice = input("Deine Wahl (J/N): ").strip().lower()
+        if choice != 'j':
+            return
+            
+        print("\n[SETUP] Motor Town Fenster wird gesucht...")
+        windows = [w for w in gw.getWindowsWithTitle("Motor Town") if 'Watcher' not in w.title]
+        if not windows:
+            print("[FEHLER] Motor Town ist nicht offen! Starte erst das Spiel. Verwende Standard.")
+            time.sleep(3)
+            return
+            
+        win = windows[0]
+        if win.width < 200 or win.height < 200:
+            print("[FEHLER] Das Motor Town Fenster ist minimiert! Verwende Standard.")
+            time.sleep(3)
+            return
+
+        with mss.mss() as sct:
+            mon = {"top": max(0, win.top), "left": max(0, win.left), "width": win.width, "height": win.height}
+            img_np = np.array(sct.grab(mon))
+            bgr = cv2.cvtColor(img_np, cv2.COLOR_BGRA2BGR)
+            
+            windowname = "KM Bereich ziehen (Danach ENTER druecken!)"
+            cv2.namedWindow(windowname, cv2.WINDOW_NORMAL)
+            cv2.resizeWindow(windowname, int(win.width * 0.7), int(win.height * 0.7))
+            cv2.setWindowProperty(windowname, cv2.WND_PROP_TOPMOST, 1)
+            
+            print("[SETUP] Ein Screenshot hat sich geoeffnet!")
+            print("[SETUP] Bitte ziehe jetzt mit der Maus einen Rahmen GENAU um die KM Anzeige. Druecke anschliessend die ENTER Taste zu bestaetigen.")
+            roi = cv2.selectROI(windowname, bgr, showCrosshair=True, fromCenter=False)
+            cv2.destroyWindow(windowname)
+            
+            if roi[2] > 0 and roi[3] > 0:
+                pct = {
+                    "x": roi[0] / mon["width"],
+                    "y": roi[1] / mon["height"],
+                    "w": roi[2] / mon["width"],
+                    "h": roi[3] / mon["height"]
+                }
+                analyzer_instance.custom_km_rect_pct = pct
+                with open("config.json", "w") as f:
+                    json.dump({"km_rect_pct": pct}, f)
+                print(f"[ERFOLG] Neuer KM Bereich PERFEKT gespeichert! Er wird von nun an fuer dein Spiel verwendet.")
+            else:
+                print("[SETUP] Auswahl abgebrochen. Verwende Standard.")
+    except Exception as e:
+        print(f"[FEHLER] Konnte Bereich nicht setzen: {e}")
+
 if __name__ == "__main__":
+    check_and_ask_roi(analyzer)
     uvicorn.run(socket_app, host="0.0.0.0", port=5000)
