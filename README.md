@@ -18,7 +18,7 @@ MotorTown Watcher uses screen capture and OCR to track your driving progress in 
 
 ## Installation
 
-Go to the [Releases page](https://github.com/YOUR_USERNAME/MotorTown-Watcher/releases/latest) and download the latest zip file containing the project. 
+Go to the [Releases page](https://github.com/20Bosko07/MotorTown-Watcher/releases/latest) and download the latest zip file containing the project. 
 
 Extract the `.zip` file on your computer to any convenient location.
 

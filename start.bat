@@ -9,12 +9,12 @@ echo.
 
 :: --- Update Check from GitHub Releases ---
 echo Checking for updates from GitHub...
-FOR /F "tokens=*" %%g IN ('powershell -Command "$ErrorActionPreference='SilentlyContinue'; $release = Invoke-RestMethod -Uri 'https://api.github.com/repos/YOUR_USERNAME/MotorTown-Watcher/releases/latest'; if($release) { $release.tag_name }"') do (SET LATEST_TAG=%%g)
+FOR /F "tokens=*" %%g IN ('powershell -Command "$ErrorActionPreference='SilentlyContinue'; $release = Invoke-RestMethod -Uri 'https://api.github.com/repos/20Bosko07/MotorTown-Watcher/releases/latest'; if($release) { $release.tag_name }"') do (SET LATEST_TAG=%%g)
 
 if not "%LATEST_TAG%"=="" (
     echo [INFO] Latest release on GitHub is: %LATEST_TAG%
     echo Please make sure your version is up to date, or check here:
-    echo https://github.com/YOUR_USERNAME/MotorTown-Watcher/releases/latest
+    echo https://github.com/20Bosko07/MotorTown-Watcher/releases/latest
 ) else (
     echo [INFO] Could not check for updates. Skipping...
 )
